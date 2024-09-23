@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #333;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        input[type="submit"] {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .chatbox {
+            margin-top: 20px;
+            background-color: #e8f4ff;
+            padding: 10px;
+            border: 1px solid #007BFF;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chatbox .user-message {
+            background-color: #dcf8c6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+            text-align: right;
+            float: right;
+            clear: both;
+        }
+        .chatbox .bot-message {
+            background-color: #fff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 15px;
+            max-width: 70%;
+            word-wrap: break-word;
+            text-align: left;
+            float: left;
+            clear: both;
+            border: 1px solid #ccc;
+        }
+        .upload-section {
+            margin-top: 20px;
+        }
+        .dataset-section {
+            margin-top: 20px;
+        }
+        .dataset-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .dataset-table th, .dataset-table td {
+            border: 1px solid #007BFF;
+            padding: 8px;
+            text-align: center;
+        }
+        .dataset-table th {
+            background-color: #007BFF;
+            color: white;
+        }
+        .dataset-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .upload-section input[type="submit"] {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .upload-section input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI Chatbot</h1>
+
+    <!-- Display dataset sample above the chatbox -->
+    <div class="dataset-section">
+        <h3>Sample Dataset:</h3>
+        <table class="dataset-table">
+            {{ dataset | safe }}
+        </table>
+    </div>
+
+    <!-- Chatbox for queries and results -->
+    <div class="chatbox" id="chatbox">
+        <!-- User and bot messages will be injected dynamically via JavaScript -->
+        {% if result %}
+        <div class="user-message">{{ query }}</div>
+        <div class="bot-message">{{ result }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Query form -->
+    <form id="chat-form" method="post" action="/" onsubmit="return false;">
+        <label for="query">Enter your query:</label>
+        <input type="text" name="query" id="query" required placeholder="e.g., mean of column_name">
+        <input type="submit" value="Send Query" onclick="sendQuery()">
+    </form>
+
+    <!-- File upload form -->
+    <div class="upload-section">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file">Upload your dataset:</label>
+            <input type="file" name="file" required>
+            <input type="submit" value="Upload Dataset">
+        </form>
+    </div>
+</div>
+
+<script>
+    function sendQuery() {
+    const query = document.getElementById('query').value;
+    const chatbox = document.getElementById('chatbox');
+
+    if (query.trim() !== "") {
+        // Add user query to chatbox
+        const userMessage = document.createElement('div');
+        userMessage.classList.add('user-message');
+        userMessage.innerText = query;
+        chatbox.appendChild(userMessage);
+
+        // Send the query to the server
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'query': query
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const botMessage = document.createElement('div');
+            botMessage.classList.add('bot-message');
+            botMessage.innerText = data.result; // Display the result
+            chatbox.appendChild(botMessage);
+
+            // Scroll to the bottom of chatbox
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        // Clear the input field
+        document.getElementById('query').value = '';
+    }
+}
+</script>
+
+</body>
+</html>
